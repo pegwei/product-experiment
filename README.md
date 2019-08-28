@@ -33,8 +33,8 @@ Within-s conditions:
 2. More-reviewed product ratings (2.7, 3.1, 3.8, 4.2, 4.6)
 3. Advantage (0.3, 0.1, 0, -0.1, -0.3)
 
-## data
-Each experiment contains a data file with headings: 
+## Data
+What do the headings in each data file mean? 
 * subj_id: random subject id 
 * demographics = gender, age, language, country
 * turkcode: randomly generated 6-digit number, used by MTurkers to confirm HIT
