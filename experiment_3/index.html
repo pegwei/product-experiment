@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Product experiment</title>
+  <script src="./js/jspsych.js"></script>
+  <script src="./js/jquery.min.js"></script>
+  <script src="./js/plugins/jspsych-html-button-response.js"></script>
+  <script src="./js/plugins/jspsych-image-button-response.js"></script>
+  <script src="./js/plugins/jspsych-survey-likert.js"></script>
+  <script src="./js/plugins/jspsych-survey-multi-choice.js"></script>
+  <script src="./js/welcome.js"></script>
+  <link href="./js/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+  <link href="./js/css/grid.css" rel="stylesheet" type="text/css"></link>
+</head>
+
+<body>
+  <div id = "welcome"></div>
+</body>
+
+<script>
+  // create timeline
+  var timeline = []; // for experiment trials
+  var introloop_exp = []; // for instructions and manipulation check trials
+  var introloop_unexp = [];
+  var turkcode = (Math.floor(Math.random() * 899999) + 100000).toString();
+
+  // set condition
+  var condorder = jsPsych.randomization.shuffle([1,2])[0] // 1=expl then unexpl, 2=unexpl then expl
+  if (condorder === 1) {
+    // var condition = jsPsych.randomization.shuffle(["explained", "unexplained"])[0];
+    var conditions = ["explained", "unexplained"];
+  } else if (condorder === 2) {
+    var conditions = ["unexplained", "explained"];
+  };
+  console.log("Condition order is " + condorder + ": " + conditions)
+
+// record the turkcode in the jsPsych data
+  jsPsych.data.addProperties({
+    condorder: condorder,
+    conditions: conditions,
+    turkcode: turkcode
+  });
+  // save and finish
+  function endExperiment(dataset,callback) {
+    $.post('submit',{"content": dataset}); // uncomment to post data
+    console.log(dataset) // comment out to avoid console log
+    setTimeout(callback,1000)
+  };
+
+  // function to start the jsPsych experiment
+  function startExperiment(){
+    jsPsych.init({
+      timeline: timeline,
+      on_finish: function() {
+        endExperiment( jsPsych.data.get().csv(), function() {document.write('<div id="endscreen" class="endscreen" style="width:1000px"><div class="endscreen" style="text-align:center; border:0px solid; padding:10px; font-size:120%; width:800px; float:right"><p><br><br><br>All done!<br><br>Your completion code is <span id="turkcode" style="font-weight:bold;font-size:130%">' + turkcode + '</span>. To receive payment for the HIT, return to the Amazon Mechanical Turk page and enter this code. Please contact us (details below) if something goes wrong and we\'ll try to fix it as quickly as possible.</p>' +
+        '<p><br><br><br><b>Study debrief</b></p><p>Thank you for completing this study. The purpose of this study is to investigate how consumers utilise information from online product reviews when choosing between different products. Specifically, this study is interested in better understanding how the perceived popularity of a product affects tendencies to prefer it over other products. In this study, popularity is represented by the number of reviews that a product has. Previous research has noted that online consumers are biased towards choosing more-reviewed, and thus more popular, products over less-reviewed products. Consumers have been observed to do this even when the less popular product has a higher star rating, and thus of superior quality. When they do this, consumers may be inferring information about the quality of the products from popularity, whereby more popular products are assumed to be of superior quality. This study seeks to understand why consumers display this bias: whether it is a biological, social imperative like herding, or whether it is a rational decision-making strategy, like an educated guess. To distinguish between these two possibilities, some participants were told that more-reviewed products have been on the market longer than less-reviewed products. The purpose of this was to attribute the difference in number of reviews to something other than product quality. Such an explanation would make it inappropriate to infer quality information from the number of reviews. If consumers who receive the explanation do not display the bias, this study would provide evidence that the bias is not due to a social compulsion, but a decision-making strategy that consumers can selectively implement, as appropriate. <br><br>Your responses will be kept anonymous and stored securely at The University of New South Wales, Sydney, Australia. If you have any questions about this study please contact <b>Mr. Ashton Wisken (a.r.wisken@student.unsw.edu.au)</b> or <b>Ms. Peggy Wei (p.wei@unsw.edu.au).</b> If you feel distressed by your participation in this study and would like to access free telephone counselling in the United States, please call USA (Lifeline Chat 1-800-273-8255).</p>' +
+        '</div></div>') })
+      }
+    });
+  }
+
+  /* change the display property of a set of objects */
+  function setDisplay(theClass, theValue) {
+    var i, classElements = document.getElementsByClassName(theClass);
+    for (i = 0; i < classElements.length; i = i + 1) {
+      classElements[i].style.display = theValue;
+    }
+  }
+
+///////////////////////// Instructions ///////////////////////////////
+  var explain = "<br><br>Please note that, on each trial in the following section of the study, <br><b>the product with the higher number of reviews has been on the market for <u>LONGER</u> than the product with fewer reviews.</b><br><br><br><br>"
+
+  var unexplain = "<br><br>Please note that, on each trial in the following section of the study, <br><b>the product with the higher number of reviews has been on the market for the <u>SAME</u> amount of time as the product with fewer reviews.</b><br><br><br><br>"
+
+  /* define the instruction block */
+  var instruction_block = {
+    type: 'html-button-response',
+    timing_post_trial: 0,
+    choices: ['Click here to continue'],
+    on_trial_start: function() { setTimeout(function() {setDisplay("jspsych-btn","")}, 1000)},
+    is_html: true,
+    stimulus: 'Thank you for agreeing to participate in our study. <br><br>We are interested in the psychological mechanisms underlying how people decide which products to buy when shopping online.<br><br><br><br>Please read the following instructions carefully as you will be given a quiz to check that you understand the task.<br><br><br>'
+  };
+
+  var inbetweenscreen = {
+    type: 'html-button-response',
+    timing_post_trial: 0,
+    choices: ['Click here to continue'],
+    on_trial_start: function() { setTimeout(function() {setDisplay("jspsych-btn","")}, 1000)},
+    is_html: true,
+    stimulus: 'You are halfway through the study! In the next part you will be doing a task that is generally similar to the previous one but there is also an important change. <br><br><br><br>'
+  }
+
+
+  var instruction_eg = {
+    type: 'image-button-response',
+    timing_post_trial: 0,
+    stimulus: "img/example.jpg",
+    button_html: '<button class="jspsych-btn">%choice%</button>',
+    prompt: "<br><br>Over the course of the study, you will be shown pairs of product reviews for similarly-priced smartphone cases. <br>You will be asked to indicate your preference for one product or the other.<br><br><br>Here's an example of the two products. <br>The number in the brackets indicates the number of reviews the product has received. <br>The number in bold is the average of people's ratings for the product.",
+    choices: ['Click here to continue']
+  };
+
+  var instruction_eg_2 = {
+    type: 'image-button-response',
+    timing_post_trial: 0,
+    stimulus: "img/example.jpg",
+    button_html: '<button class="jspsych-btn">%choice%</button>',
+    prompt: "<br><br>Just as in the first part of the study, you will be shown pairs of product reviews for similarly-priced smartphone cases. <br>You will be asked to indicate your preference for one product or the other.<br><br><br>Here's an example of the two products. <br>The number in the brackets indicates the number of reviews the product has received. <br>The number in bold is the average of people's ratings for the product.",
+    choices: ['Click here to continue']
+  };
+
+  var instruction_cond_exp = {
+    type: 'image-button-response',
+    timing_post_trial: 0,
+    stimulus: "img/example.jpg",
+    button_html: '<button class="jspsych-btn">%choice%</button>',
+    prompt: "<br><br>"+explain,
+    choices: ['Click here to continue']
+  };
+
+  var instruction_cond_unexp = {
+    type: 'image-button-response',
+    timing_post_trial: 0,
+    stimulus: "img/example.jpg",
+    button_html: '<button class="jspsych-btn">%choice%</button>',
+    prompt: "<br><br>"+unexplain,
+    choices: ['Click here to continue']
+  };
+
+  var manicheck = {
+    type: 'html-button-response',
+    timing_post_trial: 0,
+    choices: ['Click here to continue'],
+    on_trial_start: function() { setTimeout(function() {setDisplay("jspsych-btn","")}, 1000)},
+    is_html: true,
+    stimulus: "<br><br><br>Before you start, we need to check that you have understood the instructions. You will be shown the instructions again if you do not answer all of the questions correctly. <br><br><br>"
+  }
+
+  var instruction_check_exp = {
+    type: "survey-multi-choice",
+    preamble: ["<p align='center'><b>Check your knowledge before you begin!</b></p>"],
+    questions: [
+      {prompt: "<b>Question 1</b>: In this task I will be asked to:", options: [" decide on the prices of different products"," decide between two products which I would prefer to buy", " decide between two products which will sell out the fastest"], required: true},
+      {prompt: "<b>Question 2</b>: What are the products that you will be shown?", options: [" Mobile phone plans"," Smartphones", " Smartphone cases"], required: true},
+      {prompt: "<b>Question 3</b>: The products you will be shown are similarly-priced.", options: [" True", " False"], required: true},
+      {prompt: "<b>Question 4</b>: The product with the higher number of reviews:", options: [" has been on the market for LONGER than the product with fewer reviews", " has been on the market for the SAME amount of time as the product with fewer reviews", " is the superior product"], required: true}
+    ],
+    on_finish: function(data) {
+        instructioncorrect = false;
+        if( data.responses == '{"Q0":" decide between two products which I would prefer to buy","Q1":" Smartphone cases","Q2":" True","Q3":" has been on the market for LONGER than the product with fewer reviews"}') {
+          action = false; //??????????????????????????
+          instructioncorrect = true;
+        }
+      }
+    };
+
+  var instruction_check_unexp = {
+    type: "survey-multi-choice",
+    preamble: ["<p align='center'><b>Check your knowledge before you begin!</b></p>"],
+    questions: [
+      {prompt: "<b>Question 1</b>: In this task I will be asked to:", options: [" decide on the prices of different products"," decide between two products which I would prefer to buy", " decide between two products which will sell out the fastest"], required: true},
+      {prompt: "<b>Question 2</b>: What are the products that you will be shown?", options: [" Mobile phone plans"," Smartphones", " Smartphone cases"], required: true},
+      {prompt: "<b>Question 3</b>: The products you will be shown are similarly-priced.", options: [" True", " False"], required: true},
+      {prompt: "<b>Question 4</b>: The product with the higher number of reviews:", options: [" has been on the market for LONGER than the product with fewer reviews", " has been on the market for the SAME amount of time as the product with fewer reviews", " is the superior product"], required: true}
+    ],
+    on_finish: function(data) {
+      instructioncorrect = false;
+        if( data.responses == '{"Q0":" decide between two products which I would prefer to buy","Q1":" Smartphone cases","Q2":" True","Q3":" has been on the market for the SAME amount of time as the product with fewer reviews"}') {
+          action = false;
+          instructioncorrect = true;
+        }
+      }
+    };
+
+  // define a page for the incorrect response
+    var splash_screen = {
+      type: 'html-button-response',
+      timing_post_trial: 0,
+      // button_html: '<button class="jspsych-btn" style="display:none">%choice%</button>',
+      choices: ['Click here to read the instructions again'],
+      on_trial_start: function() {setTimeout(function() {setDisplay("jspsych-btn","")}, 500)},
+      is_html: true,
+      stimulus: 'Unfortunately, at least one of your answers was incorrect. <br><br><br>'
+    };
+
+    /* ...but push it to a conditional node that only shows it if the response was wrong */
+    var conditional_splash = {
+      timeline: [splash_screen],
+      conditional_function: function(data) {
+        return !instructioncorrect // skip if correct
+      }
+    };
+
+    /* finally, add the entirety of this introductory section to a loop node ... */
+    var loop_node_exp = {
+      timeline: introloop_exp,
+      loop_function: function(data) {
+        //var action = true;
+        return !instructioncorrect // stop looping if correct
+      }
+    };
+
+    var loop_node_unexp = {
+      timeline: introloop_unexp,
+      loop_function: function(data) {
+        //var action = true;
+        return !instructioncorrect // stop looping if correct
+      }
+    };
+
+    /* success trial */
+    var successtrial = {
+      type: 'html-button-response',
+      timing_post_trial: 0,
+      choices: ['Click here to begin the experiment'],
+      on_trial_start: function() { setTimeout(function() {setDisplay("jspsych-btn","")}, 500)},
+      is_html: true,
+      stimulus: 'Well done! You may now start the task. <br><br><br>'
+    };
+
+    var star_rate = [
+    [2.7, 2.4,  1],	// Main trials
+    [3.1, 2.8,  2],
+    [3.8, 3.5,  3],
+    [4.2, 3.9,  4],
+    [4.6, 4.3,  5],
+    [2.7, 2.6,  6],
+    [3.1, 3,    7],
+    [3.8, 3.7,  8],
+    [4.2, 4.1,  9],
+    [4.6, 4.5, 10],
+    [2.7, 2.7, 11],
+    [3.1, 3.1, 12],
+    [3.8, 3.8, 13],
+    [4.2, 4.2, 14],
+    [4.6, 4.6, 15],
+    [2.7, 2.8, 16],
+    [3.1, 3.2, 17],
+    [3.8, 3.9, 18],
+    [4.2, 4.3, 19],
+    [4.6, 4.7, 20],
+    [2.7, 3,   21],
+    [3.1, 3.4, 22],
+    [3.8, 4.1, 23],
+    [4.2, 4.5, 24],
+    [4.6, 4.9, 25],
+    [2.7, 4.6, 26],	// Filler trials
+    [2.4, 4.3, 27],
+    [2.7, 2.4, 28],
+    [4.6, 4.3, 29],
+    [3.1, 3,   30],
+    [4.7, 4.6, 31],
+    [4.5, 2.6, 32], // Check trials
+    [4.9, 3,   33]
+    ];
+
+	///////////////////////////// EXPERIMENT LOOP ///////////////////////////////
+
+function exp(){
+  var trialorder_exp = jsPsych.randomization.repeat([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32],1);
+  console.log("Order of trials for EXPLAINED block: ");
+  console.log(trialorder_exp)
+  let trialorder = trialorder_exp;
+
+  for (let a = 0; a < 33; a++) {
+    var condition = "exp";
+    // Randomise left vs right product cards
+    var shuffleprodcard = ["img-left", "img-right"]; // calls positions from CSS
+    var prodcard = jsPsych.randomization.repeat(shuffleprodcard,1); // sets whether more reviewed is on left or right position
+
+    var more_rev = [145, 153, 149, 152, 151, 150, 148, 147, 154, 155, 146, 154, 152, 155, 151, 148, 150, 145, 149, 153, 147, 146, 152, 150, 149, 150, 152, 150, 148, 26, 25, 147, 148];
+    var less_rev = [20, 28, 24, 27, 26, 25, 23, 22, 29, 30, 21, 29, 27, 30, 26, 23, 25, 20, 24, 28, 22, 21, 27, 25, 24, 25, 27, 150, 148, 26, 25, 22, 23];
+
+    // Product Names
+    var letter = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+    var letters = jsPsych.randomization.sampleWithoutReplacement(letter,2); // takes out two letters randomly
+    var scale = ["1-Definitely purchase Product "+letters[0], "2", "3", "4", "5", "6-Definitely purchase Product "+letters[1]];
+    var leftorright = prodcard[0].includes("left"); //searches for string, if true more-reviewed product is on left
+
+    // Scale
+    var leftorright = prodcard[0].includes("left"); //searches for string, if true mr product is on left
+    if (leftorright) {
+      var firstline = "Product reviews for Product "+letters[0]+" and Product "+letters[1]+" were collected from a popular online shopping website."
+      var scale = ["1-Definitely purchase Product "+letters[0], "2", "3", "4", "5", "6-Definitely purchase Product "+letters[1]];
+    } else {
+      var firstline = "Product reviews for Product "+letters[1]+" and Product "+letters[0]+" were collected from a popular online shopping website."
+      var scale = ["1-Definitely purchase Product "+letters[1], "2", "3", "4", "5", "6-Definitely purchase Product "+letters[0]];
+    }
+
+    /* one trial */
+    var trialone = {
+      type: "survey-likert",
+      preamble: "<div class = 'container'>" +
+      // "<div class = 'text-a'><p><em>Question "+[a+1]+" of 33</em></p><br></br>" +
+      "<div class = 'text-a'><br><br><br><br>"+firstline+"</div>" +
+
+      <!-- Product card 1 -->
+      "<div class = "+prodcard[0]+"><p><strong>Product "+letters[0]+"</strong></p>" +
+      "<div class = 'star-ratings-css'>" +
+      "<div class = 'star-ratings-css-top' style='width:"+star_rate[trialorder[a]][0]/5*100+"%'><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>" +
+      "<div class = 'star-ratings-css-bottom'><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span><span style='font-size: 12px; color: #000000;'>&nbsp("+more_rev[trialorder[a]]+")</span></div></div>" +
+      "<p><strong>"+star_rate[trialorder[a]][0]+" out of 5</strong></p></div>" +
+
+      <!-- Product card 2 -->
+      "<div class = "+prodcard[1]+"><p><strong>Product "+letters[1] +"</strong></p>" +
+      "<div class = 'star-ratings-css'>" +
+      "<div class = 'star-ratings-css-top' style='width:"+star_rate[trialorder[a]][1]/5*100+"%'><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>" +
+      "<div class = 'star-ratings-css-bottom'><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span><span style='font-size: 12px; color: #000000;'>&nbsp("+less_rev[trialorder[a]]+")</span></div></div>" +
+      "<p><strong>"+star_rate[trialorder[a]][1]+" out of 5</strong></p></div>" +
+
+      "<div class = 'text-b'>Based on the reviews, which product would you be more likely to purchase?</div>" +
+      "</div>",
+      questions: [{prompt: "Indicate your preference on a scale of 1 to 6", labels: scale, required: true}],
+      post_trial_gap: 300,
+      data: {
+        morerevonleft: leftorright,
+        trial: star_rate[trialorder[a]][2],
+        morerev: star_rate[trialorder[a]][0],
+        lessrev: star_rate[trialorder[a]][1],
+        condition: condition}
+      };
+      timeline.push(trialone)
+    } //Ends experiment loop
+}
+
+function unexp() {
+  var trialorder_unexp = jsPsych.randomization.repeat([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32],1);
+  console.log("Order of trials for UNEXPLAINED block: ");
+  console.log(trialorder_unexp)
+  let trialorder = trialorder_unexp;
+
+  for (let a = 0; a < 33; a++) {
+      var condition = "unexp";
+    // Randomise left vs right product cards
+    var shuffleprodcard = ["img-left", "img-right"]; // calls positions from CSS
+    var prodcard = jsPsych.randomization.repeat(shuffleprodcard,1); // sets whether more reviewed is on left or right position
+
+    var more_rev = [145, 153, 149, 152, 151, 150, 148, 147, 154, 155, 146, 154, 152, 155, 151, 148, 150, 145, 149, 153, 147, 146, 152, 150, 149, 150, 152, 150, 148, 26, 25, 147, 148];
+    var less_rev = [20, 28, 24, 27, 26, 25, 23, 22, 29, 30, 21, 29, 27, 30, 26, 23, 25, 20, 24, 28, 22, 21, 27, 25, 24, 25, 27, 150, 148, 26, 25, 22, 23];
+
+    // Product Names
+    var letter = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+    var letters = jsPsych.randomization.sampleWithoutReplacement(letter,2); // takes out two letters randomly
+    var scale = ["1-Definitely purchase Product "+letters[0], "2", "3", "4", "5", "6-Definitely purchase Product "+letters[1]];
+    var leftorright = prodcard[0].includes("left"); //searches for string, if true more-reviewed product is on left
+
+    // Scale
+    var leftorright = prodcard[0].includes("left"); //searches for string, if true mr product is on left
+    if (leftorright) {
+      var firstline = "Product reviews for Product "+letters[0]+" and Product "+letters[1]+" were collected from a popular online shopping website."
+      var scale = ["1-Definitely purchase Product "+letters[0], "2", "3", "4", "5", "6-Definitely purchase Product "+letters[1]];
+    } else {
+      var firstline = "Product reviews for Product "+letters[1]+" and Product "+letters[0]+" were collected from a popular online shopping website."
+      var scale = ["1-Definitely purchase Product "+letters[1], "2", "3", "4", "5", "6-Definitely purchase Product "+letters[0]];
+    }
+
+    /* one trial */
+    var trialtwo = {
+      type: "survey-likert",
+      preamble: "<div class = 'container'>" +
+      // "<div class = 'text-a'><p><em>Question "+[a+1]+" of 33</em></p><br></br>" +
+      "<div class = 'text-a'><br><br><br><br>"+firstline+"</div>" +
+
+      <!-- Product card 1 -->
+      "<div class = "+prodcard[0]+"><p><strong>Product "+letters[0]+"</strong></p>" +
+      "<div class = 'star-ratings-css'>" +
+      "<div class = 'star-ratings-css-top' style='width:"+star_rate[trialorder[a]][0]/5*100+"%'><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>" +
+      "<div class = 'star-ratings-css-bottom'><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span><span style='font-size: 12px; color: #000000;'>&nbsp("+more_rev[trialorder[a]]+")</span></div></div>" +
+      "<p><strong>"+star_rate[trialorder[a]][0]+" out of 5</strong></p></div>" +
+
+      <!-- Product card 2 -->
+      "<div class = "+prodcard[1]+"><p><strong>Product "+letters[1] +"</strong></p>" +
+      "<div class = 'star-ratings-css'>" +
+      "<div class = 'star-ratings-css-top' style='width:"+star_rate[trialorder[a]][1]/5*100+"%'><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>" +
+      "<div class = 'star-ratings-css-bottom'><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span><span style='font-size: 12px; color: #000000;'>&nbsp("+less_rev[trialorder[a]]+")</span></div></div>" +
+      "<p><strong>"+star_rate[trialorder[a]][1]+" out of 5</strong></p></div>" +
+
+      "<div class = 'text-b'>Based on the reviews, which product would you be more likely to purchase?</div>" +
+      "</div>",
+      questions: [{prompt: "Indicate your preference on a scale of 1 to 6", labels: scale, required: true}],
+      post_trial_gap: 300,
+      data: {
+        morerevonleft: leftorright,
+        trial: star_rate[trialorder[a]][2],
+        morerev: star_rate[trialorder[a]][0],
+        lessrev: star_rate[trialorder[a]][1],
+        condition: condition}
+      };
+      timeline.push(trialtwo)
+    } //Ends experiment loop
+}
+
+var task_check = { // Asks end question to check if they've completed similar task before
+  type: 'html-button-response',
+  timing_post_trial: 0,
+  choices: ['Yes', 'No'],
+  stimulus: "You're almost finished! One last question: <br><br>Have you ever completed a psychology experiment similar to this on Amazon MTurk where you were explicitly asked to indicate a preference between two products after considering their ratings and review numbers?<br><br>"
+};
+
+if (condorder == 1) { //explained, unexplained
+  var instructioncorrect = false;
+  introloop_exp.push(instruction_block); // <- the setup block gets pushed to a "loop node"
+  introloop_exp.push(instruction_eg);
+  introloop_exp.push(instruction_cond_exp);
+  introloop_exp.push(manicheck);
+  introloop_exp.push(instruction_check_exp)
+  introloop_exp.push(conditional_splash)
+  timeline.push(loop_node_exp)
+  timeline.push(successtrial);
+  exp();
+  introloop_unexp.push(inbetweenscreen); // <- the setup block gets pushed to a "loop node"
+  introloop_unexp.push(instruction_eg_2);
+  introloop_unexp.push(instruction_cond_unexp);
+  introloop_unexp.push(manicheck);
+  introloop_unexp.push(instruction_check_unexp)
+  introloop_unexp.push(conditional_splash)
+  timeline.push(loop_node_unexp)
+  timeline.push(successtrial);
+  unexp();
+  timeline.push(task_check);
+} else if (condorder == 2) { //unexplained, explained
+  var instructioncorrect = false;
+  introloop_unexp.push(instruction_block); // <- the setup block gets pushed to a "loop node"
+  introloop_unexp.push(instruction_eg);
+  introloop_unexp.push(instruction_cond_unexp);
+  introloop_unexp.push(manicheck);
+  introloop_unexp.push(instruction_check_unexp)
+  introloop_unexp.push(conditional_splash)
+  timeline.push(loop_node_unexp)
+  timeline.push(successtrial);
+  unexp();
+  introloop_exp.push(inbetweenscreen); // <- the setup block gets pushed to a "loop node"
+  introloop_exp.push(instruction_eg_2);
+  introloop_exp.push(instruction_cond_exp);
+  introloop_exp.push(manicheck);
+  introloop_exp.push(instruction_check_exp)
+  introloop_exp.push(conditional_splash)
+  timeline.push(loop_node_exp)
+  timeline.push(successtrial);
+  exp();
+  timeline.push(task_check);
+};
+
+    /* start by running the "welcome" */
+    welcome.run();
+
+
+
+</script>
+
+</html>
